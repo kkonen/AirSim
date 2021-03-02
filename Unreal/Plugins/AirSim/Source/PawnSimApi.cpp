@@ -578,7 +578,9 @@ msr::airlib::Environment* PawnSimApi::getEnvironment()
 std::string PawnSimApi::getRecordFileLine(bool is_header_line) const
 {
     if (is_header_line) {
-        return "TimeStamp\tPOS_X\tPOS_Y\tPOS_Z\tQ_W\tQ_X\tQ_Y\tQ_Z\t";
+        return "TimeStamp\tPOS_X\tPOS_Y\tPOS_Z\tQ_W\tQ_X\tQ_Y\tQ_Z\tLidar_Cloud\tLidar_TimeStamp\tIMU_ANG_VEL_X\tIMU_ANG_VEL_Y\tIMU_LIN_ACC_X\tIMU_LIN_ACC_Y\tIMU_TimeStamp\t";
+        //TODO: Handle cases when lidar sensor is not available
+        //TODO: Log IMU and LIDAR data seperate!
     }
 
     const Kinematics::State* kinematics = getGroundTruthKinematics();
@@ -586,7 +588,6 @@ std::string PawnSimApi::getRecordFileLine(bool is_header_line) const
 
     //TODO: because this bug we are using alternative code with stringstream
     //https://answers.unrealengine.com/questions/664905/unreal-crashes-on-two-lines-of-extremely-simple-st.html
-
     std::string line;
     line.append(std::to_string(timestamp_millis)).append("\t")
         .append(std::to_string(kinematics->pose.position.x())).append("\t")
@@ -598,14 +599,29 @@ std::string PawnSimApi::getRecordFileLine(bool is_header_line) const
         .append(std::to_string(kinematics->pose.orientation.z())).append("\t")
         ;
 
-    return line;
+    try {
+        auto lidar_data = getVehicleApiBase()->getLidarData("");
+        for (int i = 0; i < lidar_data.point_cloud.size(); i++) {
+            line.append(std::to_string(lidar_data.point_cloud.at(i))).append(";");
+        }
+        line.append("\t").append(std::to_string(lidar_data.time_stamp)).append("\t");
+    }
+    catch (msr::airlib::VehicleApiBase::VehicleControllerException& e) {
+        UAirBlueprintLib::LogMessageString("Unable to record Lidar Data: ", e.what(), LogDebugLevel::Failure);
+    }
+    try {
+        auto imu_data = getVehicleApiBase()->getImuData("");
+        line.append(std::to_string(imu_data.angular_velocity.x())).append("\t");
+        line.append(std::to_string(imu_data.angular_velocity.y())).append("\t");
+        line.append(std::to_string(imu_data.linear_acceleration.x())).append("\t");
+        line.append(std::to_string(imu_data.linear_acceleration.y())).append("\t");
+        line.append(std::to_string(imu_data.time_stamp)).append("\t");
+    }
+    catch (msr::airlib::VehicleApiBase::VehicleControllerException& e) {
+        UAirBlueprintLib::LogMessageString("Unable to record IMU Data: ", e.what(), LogDebugLevel::Failure);
+    }
 
-    //std::stringstream ss;
-    //ss << timestamp_millis << "\t";
-    //ss << kinematics.pose.position.x() << "\t" << kinematics.pose.position.y() << "\t" << kinematics.pose.position.z() << "\t";
-    //ss << kinematics.pose.orientation.w() << "\t" << kinematics.pose.orientation.x() << "\t" << kinematics.pose.orientation.y() << "\t" << kinematics.pose.orientation.z() << "\t";
-    //ss << "\n";
-    //return ss.str();
+    return line;
 }
 
 msr::airlib::VehicleApiBase* PawnSimApi::getVehicleApiBase() const
