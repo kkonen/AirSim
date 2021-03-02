@@ -12,9 +12,10 @@
     <OutputPath>.</OutputPath>
     <Name>PythonClient</Name>
     <RootNamespace>PythonClient</RootNamespace>
-    <InterpreterId>Global|ContinuumAnalytics|Anaconda36-64</InterpreterId>
+    <InterpreterId>CondaEnv|CondaEnv|airsim_env</InterpreterId>
     <InterpreterVersion>
     </InterpreterVersion>
+    <TestFramework>Pytest</TestFramework>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -129,6 +130,7 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <InterpreterReference Include="CondaEnv|CondaEnv|airsim_env" />
     <InterpreterReference Include="Global|ContinuumAnalytics|Anaconda36-64" />
   </ItemGroup>
   <PropertyGroup>

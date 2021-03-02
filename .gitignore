@@ -385,8 +385,5 @@ build_docs/
 # api docs
 PythonClient/docs/_build
 
-# python project settings
-PythonClient/PythonClient.pyproj
-
 # unreal environments 
 Unreal/Environments/Neighborhood
